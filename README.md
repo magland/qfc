@@ -7,7 +7,7 @@ With the increasing sizes of data for extracellular electrophysiology, it is cru
 Here, we introduce a simple lossy compression method, inspired by the Discrete Cosine Transform (DCT) and the quantization steps of JPEG compression for images. The method comprises the following steps:
 * Compute the Discrete Fourier Transform (DFT) of the time series data in the time domain.
 * Quantize the Fourier coefficients to achieve a target entropy (the entropy determines the theoretically achievable compression ratio). This is done by multiplying by a normalization factor and then rounding to the nearest integer.
-* Compress the reduced-entropy quantized Fourier coefficients using GZIP (other methods could also be used).
+* Compress the reduced-entropy quantized Fourier coefficients using ZLIB (other methods could also be used).
 
 To decompress:
 * Unzip the quantized Fourier coefficients.
