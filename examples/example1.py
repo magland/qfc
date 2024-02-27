@@ -51,7 +51,7 @@ def main1():
 
 
 def main2():
-    num_samples = 50000
+    num_samples = 5000
     sampling_frequency = 30000
     y = np.random.randn(num_samples, 10) * 50
     y = lowpass_filter(y, sampling_frequency, 6000)

@@ -36,7 +36,7 @@ def qfc_multi_segment_pre_compress(
         prepared_segments = list(executor.map(
             lambda segment_range: qfc_pre_compress(
                 x[segment_range[0]:segment_range[1], :],
-                quant_scale_factor=quant_scale_factor * np.sqrt((segment_range[1] - segment_range[0]) / x.shape[0])
+                quant_scale_factor=quant_scale_factor
             ),
             segment_ranges
         ))
@@ -101,7 +101,7 @@ def qfc_multi_segment_inv_pre_compress(
         prepared_segments = list(executor.map(
             lambda segment_range: qfc_inv_pre_compress(
                 x[segment_range[0]:segment_range[1], :],
-                quant_scale_factor=quant_scale_factor * np.sqrt((segment_range[1] - segment_range[0]) / x.shape[0])
+                quant_scale_factor=quant_scale_factor
             ),
             segment_ranges
         ))

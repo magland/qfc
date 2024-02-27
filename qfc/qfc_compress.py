@@ -26,7 +26,7 @@ def qfc_pre_compress(
         The prepared array
     """
     qs = quant_scale_factor
-    x_fft = np.fft.rfft(x, axis=0) / x.shape[0]  # we divide by the number of samples so that quant scale factor does not depend on the number of samples
+    x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the number of samples so that quant scale factor does not depend on the number of samples
     x_fft_re = np.real(x_fft)
     x_fft_im = np.imag(x_fft)
     x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
@@ -87,7 +87,7 @@ def qfc_inv_pre_compress(
         axis=0
     )
     x_fft = x_fft_re + 1j * x_fft_im
-    x = np.fft.irfft(x_fft, axis=0) * num_samples
+    x = np.fft.irfft(x_fft, axis=0) * np.sqrt(num_samples)
     if len(original_shape) == 1:
         x = x.ravel()
     return x
@@ -150,7 +150,7 @@ def qfc_estimate_quant_scale_factor(
     float
         The quantization scale factor
     """
-    x_fft = np.fft.rfft(x, axis=0) / x.shape[0]  # we divide by the number of samples so that quantization scale factor does not depend on the number of samples
+    x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the number of samples so that quantization scale factor does not depend on the number of samples
     x_fft_re = np.real(x_fft)
     x_fft_im = np.imag(x_fft)
     x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
@@ -206,7 +206,7 @@ def qfc_estimate_quant_scale_factor(
             raise ValueError(
                 "Only one of target_compression_ratio and target_residual_std can be specified"
             )
-        target_sumsqr_in_fourier_domain = target_residual_std**2 / 2
+        target_sumsqr_in_fourier_domain = (target_residual_std**2 / 2) * x.shape[0]
         def resid_sumsqr_in_fourier_domain_for_quant_scale_factor(qs: float):
             x_re_quantized = np.round(x_fft_re * qs).astype(np.int16) / qs
             x_im_quantized = np.round(x_fft_im * qs).astype(np.int16) / qs
