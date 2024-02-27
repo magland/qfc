@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from qfc import qfc_compress, qfc_decompress, qfc_estimate_normalization_factor
+from qfc import qfc_compress, qfc_decompress, qfc_estimate_quant_scale_factor
 
 
 def main1():
@@ -12,18 +12,18 @@ def main1():
     target_compression_ratio = 15
 
     ############################################################
-    normalization_factor = qfc_estimate_normalization_factor(
+    quant_scale_factor = qfc_estimate_quant_scale_factor(
         y,
         target_compression_ratio=target_compression_ratio
     )
-    print(f'Using normalization factor: {normalization_factor}')
+    print(f'Using quant scale factor: {quant_scale_factor}')
     compressed_bytes = qfc_compress(
         y,
-        normalization_factor=normalization_factor
+        quant_scale_factor=quant_scale_factor
     )
     y_decompressed = qfc_decompress(
         compressed_bytes,
-        normalization_factor=normalization_factor,
+        quant_scale_factor=quant_scale_factor,
         original_shape=y.shape
     )
     ############################################################
@@ -51,7 +51,7 @@ def main1():
 
 
 def main2():
-    num_samples = 5000
+    num_samples = 50000
     sampling_frequency = 30000
     y = np.random.randn(num_samples, 10) * 50
     y = lowpass_filter(y, sampling_frequency, 6000)
@@ -59,18 +59,18 @@ def main2():
     target_residual_std = 3
 
     ############################################################
-    normalization_factor = qfc_estimate_normalization_factor(
+    quant_scale_factor = qfc_estimate_quant_scale_factor(
         y,
         target_residual_std=target_residual_std
     )
-    print(f'Using normalization factor: {normalization_factor}')
+    print(f'Using quant scale factor: {quant_scale_factor}')
     compressed_bytes = qfc_compress(
         y,
-        normalization_factor=normalization_factor
+        quant_scale_factor=quant_scale_factor
     )
     y_decompressed = qfc_decompress(
         compressed_bytes,
-        normalization_factor=normalization_factor,
+        quant_scale_factor=quant_scale_factor,
         original_shape=y.shape
     )
     ############################################################

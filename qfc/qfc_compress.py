@@ -4,12 +4,41 @@ from typing import Callable, Union
 import numpy as np
 import zlib
 
-from pyparsing import C
 
+def qfc_pre_compress(
+    x: np.ndarray, *,
+    quant_scale_factor: float
+):
+    """
+    Prepares an array for compression using the QFC algorithm
+
+    Parameters
+    ----------
+    x : np.ndarray
+        The input array to be compressed
+    quant_scale_factor : float
+        The scale factor to use during quantization,
+        obtained from qfc_estimate_quant_scale_factor
+
+    Returns
+    -------
+    np.ndarray
+        The prepared array
+    """
+    qs = quant_scale_factor
+    x_fft = np.fft.rfft(x, axis=0) / x.shape[0]  # we divide by the number of samples so that quant scale factor does not depend on the number of samples
+    x_fft_re = np.real(x_fft)
+    x_fft_im = np.imag(x_fft)
+    x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
+    x_fft_concat = np.concatenate([x_fft_re, x_fft_im], axis=0)
+    x_fft_concat_quantized = np.round(x_fft_concat * qs).astype(
+        np.int16
+    )
+    return x_fft_concat_quantized
 
 def qfc_compress(
-    x: np.ndarray,
-    normalization_factor: float
+    x: np.ndarray, *,
+    quant_scale_factor: float
 ):
     """
     Compresses an array using the QFC algorithm
@@ -18,59 +47,41 @@ def qfc_compress(
     ----------
     x : np.ndarray
         The input array to be compressed
-    normalization_factor : float
-        The normalization factor to use during compression,
-        obtained from qfc_estimate_normalization_factor
+    quant_scale_factor : float
+        The scale factor to use during quantization,
+        obtained from qfc_estimate_quant_scale_factor
 
     Returns
     -------
-    np.ndarray
-        The compressed array
+    bytes
+        The compressed array as bytes
     """
-    nf = normalization_factor
-    x_fft = np.fft.rfft(x, axis=0) / x.shape[0]  # we divide by the number of samples so that normalization factor does not depend on the number of samples
-    x_fft_re = np.real(x_fft)
-    x_fft_im = np.imag(x_fft)
-    x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
-    x_fft_concat = np.concatenate([x_fft_re, x_fft_im], axis=0)
-    x_fft_concat_quantized = np.round(x_fft_concat * nf).astype(
-        np.int16
-    )
+    x_fft_concat_quantized = qfc_pre_compress(x, quant_scale_factor=quant_scale_factor)
     compressed_bytes = zlib.compress(x_fft_concat_quantized.tobytes())
     return compressed_bytes
 
 
-def qfc_decompress(
-    compressed_bytes: bytes,
-    normalization_factor: float,
-    original_shape: tuple
+def qfc_inv_pre_compress(
+    x: np.ndarray, *,
+    quant_scale_factor: float
 ):
     """
-    Decompresses an array using the QFC algorithm
+    Inverts the preparation of an array for compression using the QFC algorithm
 
     Parameters
     ----------
-    compressed_bytes : bytes
-        The compressed array
-    normalization_factor : float
-        The normalization factor used during compression
-    original_shape : tuple
-        The original shape of the array
-
-    Returns
-    -------
-    np.ndarray
-        The decompressed array
+    x : np.ndarray
+        The prepared array
+    quant_scale_factor : float
+        The scale factor to use during quantization,
+        obtained from qfc_estimate_quant_scale_factor
     """
-    nf = normalization_factor
-    num_samples = original_shape[0]
-    num_channels = original_shape[1] if len(original_shape) > 1 else 1
-    decompressed_array = np.frombuffer(
-        zlib.decompress(compressed_bytes), dtype=np.int16
-    )
-    decompressed_array = decompressed_array.reshape(num_samples, num_channels)
-    x_fft_re = decompressed_array[: (num_samples // 2 + 1), :] / nf
-    x_fft_im = decompressed_array[(num_samples // 2 + 1):, :] / nf
+    qs = quant_scale_factor
+    num_samples = x.shape[0]
+    num_channels = x.shape[1] if len(x.shape) > 1 else 1
+    original_shape = (num_samples, num_channels)
+    x_fft_re = x[: (num_samples // 2 + 1), :] / qs
+    x_fft_im = x[(num_samples // 2 + 1):, :] / qs
     x_fft_im = np.concatenate(
         [np.zeros((1, num_channels)), x_fft_im, np.zeros((1, num_channels))],
         axis=0
@@ -82,28 +93,64 @@ def qfc_decompress(
     return x
 
 
-def qfc_estimate_normalization_factor(
+def qfc_decompress(
+    compressed_bytes: bytes, *,
+    quant_scale_factor: float,
+    original_shape: tuple
+):
+    """
+    Decompresses an array using the QFC algorithm
+
+    Parameters
+    ----------
+    compressed_bytes : bytes
+        The compressed array
+    quant_scale_factor : float
+        The quantization scale factor used during compression
+    original_shape : tuple
+        The original shape of the array
+
+    Returns
+    -------
+    np.ndarray
+        The decompressed array
+    """
+    num_samples = original_shape[0]
+    num_channels = original_shape[1] if len(original_shape) > 1 else 1
+    decompressed_array = np.frombuffer(
+        zlib.decompress(compressed_bytes), dtype=np.int16
+    )
+    decompressed_array = decompressed_array.reshape(num_samples, num_channels)
+    x = qfc_inv_pre_compress(decompressed_array, quant_scale_factor=quant_scale_factor)
+    return x
+
+
+def qfc_estimate_quant_scale_factor(
     x: np.ndarray,
     target_compression_ratio: Union[float, None] = None,
     target_residual_std: Union[float, None] = None
 ):
     """
-    Estimates the normalization factor for the QFC algorithm for a given
-    target compression ratio
+    Estimates the quantization scale factor for the QFC algorithm for a given
+    target compression ratio or target residual standard deviation
 
     Parameters
     ----------
     x : np.ndarray
         The input array to be compressed
-    target_compression_ratio : float
+    target_compression_ratio : float or None
         The target compression ratio
+        Exactly one of target_compression_ratio and target_residual_std must be specified
+    target_residual_std : float or None
+        The target residual standard deviation
+        Exactly one of target_compression_ratio and target_residual_std must be specified
 
     Returns
     -------
     float
-        The normalization factor
+        The quantization scale factor
     """
-    x_fft = np.fft.rfft(x, axis=0) / x.shape[0]  # we divide by the number of samples so that normalization factor does not depend on the number of samples
+    x_fft = np.fft.rfft(x, axis=0) / x.shape[0]  # we divide by the number of samples so that quantization scale factor does not depend on the number of samples
     x_fft_re = np.real(x_fft)
     x_fft_im = np.imag(x_fft)
     x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
@@ -115,7 +162,7 @@ def qfc_estimate_normalization_factor(
             )
         values = np.concatenate([x_fft_re, x_fft_im], axis=0).ravel()
 
-        # sample at most 5000 values to estimate the normalization factor
+        # sample at most 5000 values to estimate the quantization scale factor
         # do it deterministically to avoid randomness in the results
         if values.size > 5000:
             indices = np.linspace(0, values.size - 1, 5000).astype(np.int32)
@@ -140,39 +187,39 @@ def qfc_estimate_normalization_factor(
             entropy = -np.sum(probabilities * np.log2(probabilities)).astype(np.float32)
             return float(entropy)
 
-        def entropy_for_normalization_factor(nf: float):
-            return _estimate_entropy(np.round(values * nf).astype(np.int16))
+        def entropy_for_quant_scale_factor(qs: float):
+            return _estimate_entropy(np.round(values * qs).astype(np.int16))
 
         num_bits_per_value_in_original_array = np.dtype(x.dtype).itemsize * 8
         target_entropy = float(num_bits_per_value_in_original_array) / target_compression_ratio
 
-        nf = _monotonic_binary_search(
-            entropy_for_normalization_factor,
+        qs = _monotonic_binary_search(
+            entropy_for_quant_scale_factor,
             target_value=target_entropy,
             max_iterations=100,
             tolerance=0.001,
             ascending=True
         )
-        return nf
+        return qs
     elif target_residual_std is not None:
         if target_compression_ratio is not None:
             raise ValueError(
                 "Only one of target_compression_ratio and target_residual_std can be specified"
             )
         target_sumsqr_in_fourier_domain = target_residual_std**2 / 2
-        def resid_sumsqr_in_fourier_domain_for_normalization_factor(nf: float):
-            x_re_quantized = np.round(x_fft_re * nf).astype(np.int16) / nf
-            x_im_quantized = np.round(x_fft_im * nf).astype(np.int16) / nf
+        def resid_sumsqr_in_fourier_domain_for_quant_scale_factor(qs: float):
+            x_re_quantized = np.round(x_fft_re * qs).astype(np.int16) / qs
+            x_im_quantized = np.round(x_fft_im * qs).astype(np.int16) / qs
             diffs = np.concatenate([x_re_quantized - x_fft_re, x_im_quantized - x_fft_im], axis=0)
             return np.sum(np.square(diffs)) / x.shape[1]
-        nf = _monotonic_binary_search(
-            resid_sumsqr_in_fourier_domain_for_normalization_factor,
+        qs = _monotonic_binary_search(
+            resid_sumsqr_in_fourier_domain_for_quant_scale_factor,
             target_value=target_sumsqr_in_fourier_domain,
             max_iterations=100,
             tolerance=0.001,
             ascending=False
         )
-        return nf
+        return qs
     else:
         raise ValueError(
             "You must either specify target_compression_ratio or target_residual_std"

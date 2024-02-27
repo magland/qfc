@@ -18,7 +18,7 @@ This method is particularly well-suited for data that has been bandpass-filtered
 
 For a comparison of various lossy and lossless compression schemes, see [Compression strategies for large-scale electrophysiology data, Buccino et al.](https://www.biorxiv.org/content/10.1101/2023.05.22.541700v2.full.pdf).
 
-To view this applied to some real data, [see this notebook](https://github.com/magland/qfc/blob/main/qfc.ipynb).
+For application to real data, [see this notebook](https://github.com/magland/qfc/blob/main/qfc.ipynb).
 
 ## Installation
 
