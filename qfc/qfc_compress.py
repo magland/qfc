@@ -26,7 +26,7 @@ def qfc_pre_compress(
         The prepared array
     """
     qs = quant_scale_factor
-    x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the number of samples so that quant scale factor does not depend on the number of samples
+    x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the sqrt of the number of samples so that quant scale factor does not depend on the number of samples
     x_fft_re = np.real(x_fft)
     x_fft_im = np.imag(x_fft)
     x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
@@ -150,7 +150,7 @@ def qfc_estimate_quant_scale_factor(
     float
         The quantization scale factor
     """
-    x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the number of samples so that quantization scale factor does not depend on the number of samples
+    x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the sqrt of the number of samples so that quantization scale factor does not depend on the number of samples
     x_fft_re = np.real(x_fft)
     x_fft_im = np.imag(x_fft)
     x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
