@@ -15,12 +15,12 @@ def zarr_codec_test():
     segment_length = 10000
     chunks = (30000, 64)
     num_channels = 384
-    target_residual_std = 4
+    target_residual_std = 10
 
     print(f'Duration = {duration_sec} sec; num_channels = {num_channels}')
 
     print('Defining array')
-    array = (np.random.randn(num_samples, num_channels) * 5).astype("int16")
+    array = (np.random.randn(num_samples, num_channels) * 20).astype("int16")
     print('Estimating quant scale factor')
     quant_scale_factor = qfc_estimate_quant_scale_factor(
         array[:10000], target_residual_std=target_residual_std

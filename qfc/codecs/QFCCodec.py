@@ -5,6 +5,7 @@ from numcodecs.abc import Codec
 from numcodecs import register_codec
 from ..qfc_multi_segment_compress import qfc_multi_segment_compress, qfc_multi_segment_decompress
 
+_special_int32_for_header = 7364182
 
 class QFCCodec(Codec):
     codec_id = "qfc"
@@ -14,7 +15,7 @@ class QFCCodec(Codec):
         quant_scale_factor: float,
         dtype: str,
         segment_length: int,
-        compression_method: Literal["zlib", "zstd"] = "zlib",
+        compression_method: Literal["zlib", "zstd"] = "zstd",
         zstd_level: int = 3,
         zlib_level: int = 3,
     ):
@@ -43,23 +44,33 @@ class QFCCodec(Codec):
             zstd_level=self.zstd_level,
             zlib_level=self.zlib_level
         )
-        # We need a small header to store the num_samples and num_channels
+        # We need a small header to store the info needed to decompress
         num_samples = buf.shape[0]
-        header = np.array([1, num_samples, num_channels]).astype(np.int32)
+        header = np.array([_special_int32_for_header, 1, num_samples, num_channels, self.segment_length]).astype(np.int32)
         return header.tobytes() + ret
 
 
     def decode(self, buf: bytes, out = None):
-        header = np.frombuffer(buf, dtype=np.int32, count=3)
-        if header[0] != 1:
-            raise Exception(f'qfc: invalid header: {header[0]}')
-        num_samples = header[1]
-        num_channels = header[2]
+        header = np.frombuffer(buf, dtype=np.int32, count=5)
+        if header[0] != _special_int32_for_header:
+            raise Exception(f'qfc: invalid header[0]: {header[0]}')
+        if header[1] != 1:
+            raise Exception(f'qfc: invalid header[1]: {header[1]}')
+        num_samples = header[2]
+        num_channels = header[3]
+        if header[4] != self.segment_length:
+            raise Exception(f'qfc: unexpected segment length in header. Expected {self.segment_length}, got {header[3]}')
         if out is not None:
             if out.shape[1] != num_channels:
                 raise Exception(f'Unexpected num. channels in out: expected {num_channels}, got {out.shape[1]}')
+            if out.shape[0] != num_samples:
+                raise Exception(f'Unexpected num. samples in out: expected {num_samples}, got {out.shape[0]}')
+            if str(out.dtype) != self.dtype:
+                raise Exception(f'Unexpected dtype in out: expected {self.dtype}, got {out.dtype}')
+            if not out.flags['C_CONTIGUOUS']:
+                raise Exception('qfc: expected out to be in C order')
         decompressed_array = qfc_multi_segment_decompress(
-            buf[12:],
+            buf[4 * 5:],  # skip the header
             dtype=self.dtype,
             num_channels=num_channels,
             segment_length=self.segment_length,
