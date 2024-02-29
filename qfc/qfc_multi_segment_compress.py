@@ -1,5 +1,3 @@
-# flake8: noqa: E501
-
 from typing import Literal
 import concurrent.futures
 import zlib

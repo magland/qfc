@@ -1,5 +1,3 @@
-# flake8: noqa: E501
-
 from matplotlib import pyplot as plt
 import numpy as np
 from qfc import qfc_compress, qfc_decompress, qfc_estimate_quant_scale_factor

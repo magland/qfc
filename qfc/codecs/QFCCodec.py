@@ -1,10 +1,9 @@
+from atexit import register
 from typing import Literal
 import numpy as np
 from numcodecs.abc import Codec
+from numcodecs import register_codec
 from ..qfc_multi_segment_compress import qfc_multi_segment_compress, qfc_multi_segment_decompress
-
-
-# flake8: noqa: E501
 
 
 class QFCCodec(Codec):
@@ -78,6 +77,11 @@ class QFCCodec(Codec):
             out = decompressed_array
         return out
 
-
     def __repr__(self):
-        return f"QFCCodec(quant_scale_factor={self.quant_scale_factor}, compression_method={self.compression_method}, zstd_level={self.zstd_level}, zlib_level={self.zlib_level})"
+        return (
+            f'QFCCodec (quant_scale_factor={self.quant_scale_factor}, dtype={self.dtype}, segment_length={self.segment_length}, compression_method={self.compression_method}, zstd_level={self.zstd_level}, zlib_level={self.zlib_level})'
+        )
+
+    @staticmethod
+    def register_codec():
+        register_codec(QFCCodec)

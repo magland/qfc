@@ -1,1 +1,1 @@
-from .QFCCodec import QFCCodec
+from .QFCCodec import QFCCodec  # noqa

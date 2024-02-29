@@ -1,5 +1,3 @@
-# flake8: noqa: E501
-
 from typing import Callable, Union, Literal
 import numpy as np
 import zlib

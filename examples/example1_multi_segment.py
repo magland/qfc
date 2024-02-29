@@ -1,5 +1,3 @@
-# flake8: noqa: E501
-
 import numpy as np
 from matplotlib import pyplot as plt
 from qfc import qfc_multi_segment_compress, qfc_multi_segment_decompress
