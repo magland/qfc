@@ -28,7 +28,6 @@ class QFCCodec(Codec):
 
 
     def encode(self, buf: np.ndarray):
-        print('----- encode', buf.shape)
         num_channels = buf.shape[1] if buf.ndim > 1 else 1
         if buf.ndim > 2:
             raise Exception(f'qfc: expected ndims <= 2, got {buf.ndim}')
@@ -57,7 +56,6 @@ class QFCCodec(Codec):
             raise Exception(f'qfc: invalid header: {header[0]}')
         num_samples = header[1]
         num_channels = header[2]
-        print('--- decode', num_samples, num_channels)
         if out is not None:
             if out.shape[1] != num_channels:
                 raise Exception(f'Unexpected num. channels in out: expected {num_channels}, got {out.shape[1]}')
@@ -71,6 +69,9 @@ class QFCCodec(Codec):
         )
         if decompressed_array.shape[0] != num_samples:
             raise Exception(f'qfc: unexpected num samples in decompressed array. Expected {num_samples}, got {decompressed_array.shape[0]}')
+        # check if buf is C order
+        if not decompressed_array.flags['C_CONTIGUOUS']:
+            raise Exception('qfc: expected decompressed_array to be in C order')
         if out is not None:
             np.copyto(out, decompressed_array)
         else:

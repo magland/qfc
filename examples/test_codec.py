@@ -39,8 +39,8 @@ def zarr_codec_test():
     import tempfile
     import os
 
-    num_samples = 4000
-    num_channels = 3
+    num_samples = 2000
+    num_channels = 4
     target_residual_std = 2
     array = (np.random.randn(num_samples, num_channels) * 50).astype("float32")
     quant_scale_factor = qfc_estimate_quant_scale_factor(
@@ -62,7 +62,7 @@ def zarr_codec_test():
         g.create_dataset(
             "array",
             data=array,
-            chunks=(1000, 1),
+            chunks=(1000, 3),
             compressor=codec
         )
 
@@ -72,9 +72,6 @@ def zarr_codec_test():
         resid_stdev = np.sqrt(np.var(array - loaded_z))
 
         print(resid_stdev)
-
-        print(array[:2, :])
-        print(loaded_z[:2, :])
 
         assert (
             target_residual_std - 0.5 < resid_stdev

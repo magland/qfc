@@ -26,6 +26,7 @@ def qfc_pre_compress(
     """
     qs = quant_scale_factor
     x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the sqrt of the number of samples so that quant scale factor does not depend on the number of samples
+    x_fft = np.ascontiguousarray(x_fft)  # This is important so the codec will behave properly
     x_fft_re = np.real(x_fft)
     x_fft_im = np.imag(x_fft)
     x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
@@ -107,6 +108,7 @@ def qfc_inv_pre_compress(
     )
     x_fft = x_fft_re + 1j * x_fft_im
     x = np.fft.irfft(x_fft, axis=0) * np.sqrt(num_samples)
+    x = np.ascontiguousarray(x)  # This is important so that the codec will behave properly!
     return x.astype(dtype)
 
 
@@ -179,6 +181,7 @@ def qfc_estimate_quant_scale_factor(
         The quantization scale factor
     """
     x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the sqrt of the number of samples so that quantization scale factor does not depend on the number of samples
+    x_fft = np.ascontiguousarray(x_fft)  # This is important so that the codec will behave properly!
     x_fft_re = np.real(x_fft)
     x_fft_im = np.imag(x_fft)
     x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
