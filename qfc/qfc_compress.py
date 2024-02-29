@@ -80,7 +80,8 @@ def qfc_compress(
 
 def qfc_inv_pre_compress(
     x: np.ndarray, *,
-    quant_scale_factor: float
+    quant_scale_factor: float,
+    dtype: str
 ):
     """
     Inverts the preparation of an array for compression using the QFC algorithm
@@ -92,11 +93,12 @@ def qfc_inv_pre_compress(
     quant_scale_factor : float
         The scale factor to use during quantization,
         obtained from qfc_estimate_quant_scale_factor
+    dtype : str
+        The data type string for the reconstructed array
     """
     qs = quant_scale_factor
     num_samples = x.shape[0]
     num_channels = x.shape[1] if len(x.shape) > 1 else 1
-    original_shape = (num_samples, num_channels)
     x_fft_re = x[: (num_samples // 2 + 1), :] / qs
     x_fft_im = x[(num_samples // 2 + 1):, :] / qs
     x_fft_im = np.concatenate(
@@ -105,15 +107,14 @@ def qfc_inv_pre_compress(
     )
     x_fft = x_fft_re + 1j * x_fft_im
     x = np.fft.irfft(x_fft, axis=0) * np.sqrt(num_samples)
-    if len(original_shape) == 1:
-        x = x.ravel()
-    return x
+    return x.astype(dtype)
 
 
 def qfc_decompress(
     compressed_bytes: bytes, *,
     quant_scale_factor: float,
-    original_shape: tuple,
+    num_channels: int,
+    dtype: str,
     compression_method: Literal["zlib", "zstd"] = "zlib"
 ):
     """
@@ -125,8 +126,10 @@ def qfc_decompress(
         The compressed array
     quant_scale_factor : float
         The quantization scale factor used during compression
-    original_shape : tuple
-        The original shape of the array
+    num_channels : int
+        The number of channels
+    dtype : str
+        Data type string for the reconstructed array
     compression_method : str
         The compression method used, either "zlib" or "zstd"
 
@@ -135,8 +138,6 @@ def qfc_decompress(
     np.ndarray
         The decompressed array
     """
-    num_samples = original_shape[0]
-    num_channels = original_shape[1] if len(original_shape) > 1 else 1
     if compression_method == "zlib":
         decompressed_array = np.frombuffer(
             zlib.decompress(compressed_bytes), dtype=np.int16
@@ -147,8 +148,8 @@ def qfc_decompress(
         decompressed_array = np.frombuffer(dctx.decompress(compressed_bytes), dtype=np.int16)
     else:
         raise ValueError("compression_method must be 'zlib' or 'zstd'")
-    decompressed_array = decompressed_array.reshape(num_samples, num_channels)
-    x = qfc_inv_pre_compress(decompressed_array, quant_scale_factor=quant_scale_factor)
+    decompressed_array = decompressed_array.reshape(-1, num_channels)
+    x = qfc_inv_pre_compress(decompressed_array, quant_scale_factor=quant_scale_factor, dtype=dtype)
     return x
 
 

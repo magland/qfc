@@ -28,8 +28,9 @@ def main1():
         )
         y_decompressed = qfc_decompress(
             compressed_bytes,
+            dtype=str(y.dtype),
+            num_channels=y.shape[1],
             quant_scale_factor=quant_scale_factor,
-            original_shape=y.shape,
             compression_method=compression_method
         )
         ############################################################
@@ -76,8 +77,9 @@ def main2():
     )
     y_decompressed = qfc_decompress(
         compressed_bytes,
-        quant_scale_factor=quant_scale_factor,
-        original_shape=y.shape
+        dtype=str(y.dtype),
+        num_channels=y.shape[1],
+        quant_scale_factor=quant_scale_factor
     )
     ############################################################
 

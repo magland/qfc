@@ -30,18 +30,19 @@ def qfc_multi_segment_pre_compress(
     np.ndarray
         The prepared array
     """
-    segment_ranges = []
-    for start_index in range(0, x.shape[0], segment_length):
-        segment_ranges.append((start_index, min(start_index + segment_length, x.shape[0])))
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        prepared_segments = list(executor.map(
-            lambda segment_range: qfc_pre_compress(
-                x[segment_range[0]:segment_range[1], :],
-                quant_scale_factor=quant_scale_factor
-            ),
-            segment_ranges
-        ))
-    return np.concatenate(prepared_segments, axis=0)
+    if segment_length > 0 and segment_length < x.shape[0]:
+        segment_ranges = _get_segment_ranges(total_length=x.shape[0], segment_length=segment_length)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            prepared_segments = list(executor.map(
+                lambda segment_range: qfc_pre_compress(
+                    x[segment_range[0]:segment_range[1], :],
+                    quant_scale_factor=quant_scale_factor
+                ),
+                segment_ranges
+            ))
+        return np.concatenate(prepared_segments, axis=0)
+    else:
+        return qfc_pre_compress(x, quant_scale_factor=quant_scale_factor)
 
 
 def qfc_multi_segment_compress(
@@ -97,7 +98,8 @@ def qfc_multi_segment_compress(
 def qfc_multi_segment_inv_pre_compress(
     x: np.ndarray, *,
     quant_scale_factor: float,
-    segment_length: int
+    segment_length: int,
+    dtype: str
 ):
     """
     Inverts the preparation of an array for compression using the QFC algorithm with multiple segments
@@ -111,26 +113,44 @@ def qfc_multi_segment_inv_pre_compress(
         obtained from qfc_estimate_quant_scale_factor
     segment_length : int
         The length of each segment
+    dtype : str
+        The data type string for the reconstructed array
     """
+    if segment_length > 0 and segment_length < x.shape[0]:
+        segment_ranges = _get_segment_ranges(total_length=x.shape[0], segment_length=segment_length)
+        prepared_segments = []
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            prepared_segments = list(executor.map(
+                lambda segment_range: qfc_inv_pre_compress(
+                    x[segment_range[0]:segment_range[1], :],
+                    quant_scale_factor=quant_scale_factor,
+                    dtype=dtype
+                ),
+                segment_ranges
+            ))
+        return np.concatenate(prepared_segments, axis=0)
+    else:
+        return qfc_inv_pre_compress(x, quant_scale_factor=quant_scale_factor, dtype=dtype)
+
+
+def _get_segment_ranges(*, total_length: int, segment_length: int):
     segment_ranges = []
-    for start_index in range(0, x.shape[0], segment_length):
-        segment_ranges.append((start_index, min(start_index + segment_length, x.shape[0])))
-    prepared_segments = []
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        prepared_segments = list(executor.map(
-            lambda segment_range: qfc_inv_pre_compress(
-                x[segment_range[0]:segment_range[1], :],
-                quant_scale_factor=quant_scale_factor
-            ),
-            segment_ranges
-        ))
-    return np.concatenate(prepared_segments, axis=0)
+    for start_index in range(0, total_length, segment_length):
+        segment_ranges.append((start_index, min(start_index + segment_length, total_length)))
+    size_of_final_segment = segment_ranges[-1][1] - segment_ranges[-1][0]
+    half_segment_length = int(segment_length / 2)
+    if size_of_final_segment < half_segment_length and len(segment_ranges) > 1:
+        adjustment = half_segment_length - size_of_final_segment
+        segment_ranges[-2] = (segment_ranges[-2][0], segment_ranges[-2][1] - adjustment)
+        segment_ranges[-1] = (segment_ranges[-1][0] - adjustment, segment_ranges[-1][1])
+    return segment_ranges
 
 
 def qfc_multi_segment_decompress(
     compressed_bytes: bytes,
     quant_scale_factor: float,
-    original_shape: tuple,
+    num_channels: int,
+    dtype: str,
     segment_length: int,
     compression_method: Literal["zlib", "zstd"] = "zlib"
 ):
@@ -143,8 +163,10 @@ def qfc_multi_segment_decompress(
         The compressed array
     quant_scale_factor : float
         The quantization scale factor used during compression
-    original_shape : tuple
-        The original shape of the array
+    num_channels : int
+        The number of channels
+    dtype : int
+        The data type string for the reconstructed array
     segment_length : int
         The length of each segment
     compression_method : Literal["zlib", "zstd"]
@@ -155,8 +177,6 @@ def qfc_multi_segment_decompress(
     np.ndarray
         The decompressed array
     """
-    num_samples = original_shape[0]
-    num_channels = original_shape[1] if len(original_shape) > 1 else 1
     if compression_method == "zlib":
         decompressed_array = np.frombuffer(
             zlib.decompress(compressed_bytes), dtype=np.int16
@@ -171,6 +191,7 @@ def qfc_multi_segment_decompress(
     x = qfc_multi_segment_inv_pre_compress(
         decompressed_array,
         quant_scale_factor=quant_scale_factor,
-        segment_length=segment_length
+        segment_length=segment_length,
+        dtype=dtype
     )
     return x

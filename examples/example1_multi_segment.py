@@ -28,8 +28,9 @@ def main():
     )
     y_decompressed = qfc_multi_segment_decompress(
         compressed_bytes,
+        dtype=str(y.dtype),
+        num_channels=y.shape[1],
         quant_scale_factor=quant_scale_factor,
-        original_shape=y.shape,
         segment_length=segment_length
     )
     ############################################################
