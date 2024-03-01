@@ -25,7 +25,7 @@ def main():
         dtype="int16",
         segment_length=10000,
         compression_method="zstd",
-        zlib_level=3
+        zstd_level=3
     )
     compressed_bytes = codec.encode(y)
     y_reconstructed = codec.decode(compressed_bytes)
