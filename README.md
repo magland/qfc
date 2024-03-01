@@ -24,7 +24,7 @@ For a comparison of various lossy and lossless compression schemes, see [Compres
 pip install qfc
 ```
 
-## Usage
+## Example usage
 
 ```python
 # See examples/example1.py
