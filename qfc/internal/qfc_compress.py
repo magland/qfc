@@ -2,25 +2,27 @@ from typing import Callable, Union, Literal
 import numpy as np
 import zlib
 
+
 def qfc_pre_compress(
     x: np.ndarray, *,
     quant_scale_factor: float
 ):
     """
-    Prepares an array for compression using the QFC algorithm
+    Prepares an array for compression using the QFC algorithm This is an
+    internal function, called by the codec, and should not be called directly.
 
     Parameters
     ----------
     x : np.ndarray
         The input array to be compressed
     quant_scale_factor : float
-        The scale factor to use during quantization,
-        obtained from qfc_estimate_quant_scale_factor
+        The scale factor to use during quantization, obtained from
+        qfc_estimate_quant_scale_factor
 
     Returns
     -------
     np.ndarray
-        The prepared array
+        The prepared array.
     """
     qs = quant_scale_factor
     x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the sqrt of the number of samples so that quant scale factor does not depend on the number of samples
@@ -34,6 +36,7 @@ def qfc_pre_compress(
     )
     return x_fft_concat_quantized
 
+
 def qfc_compress(
     x: np.ndarray, *,
     quant_scale_factor: float,
@@ -42,15 +45,17 @@ def qfc_compress(
     zlib_level: int = 3
 ):
     """
-    Compresses an array using the QFC algorithm
+    Compresses an array using the QFC algorithm. This is an internal function,
+    called by the codec, and should not be called directly, because the output
+    will not include the header.
 
     Parameters
     ----------
     x : np.ndarray
         The input array to be compressed
     quant_scale_factor : float
-        The scale factor to use during quantization,
-        obtained from qfc_estimate_quant_scale_factor
+        The scale factor to use during quantization, obtained from
+        qfc_estimate_quant_scale_factor
     compression_method : str
         The compression method to use, either "zlib" or "zstd"
     zstd_level : int
@@ -61,7 +66,7 @@ def qfc_compress(
     Returns
     -------
     bytes
-        The compressed array as bytes
+        The compressed array as bytes. Will not contain the header.
     """
     x_fft_concat_quantized = qfc_pre_compress(x, quant_scale_factor=quant_scale_factor)
     if compression_method == "zlib":
@@ -83,7 +88,9 @@ def qfc_inv_pre_compress(
     dtype: str
 ):
     """
-    Inverts the preparation of an array for compression using the QFC algorithm
+    Inverts the preparation of an array for compression using the QFC algorithm.
+    This is an internal function, called by the codec, and should not be called
+    directly.
 
     Parameters
     ----------
@@ -118,12 +125,15 @@ def qfc_decompress(
     compression_method: Literal["zlib", "zstd"] = "zlib"
 ):
     """
-    Decompresses an array using the QFC algorithm
+    Decompresses an array using the QFC algorithm.
+    This is an internal function, called by the codec, and should not be called
+    directly, because the input is expected to be the compressed array only, not
+    including the header.
 
     Parameters
     ----------
     compressed_bytes : bytes
-        The compressed array
+        The compressed array, not including the header
     quant_scale_factor : float
         The quantization scale factor used during compression
     num_channels : int
@@ -156,7 +166,8 @@ def qfc_decompress(
 def qfc_estimate_quant_scale_factor(
     x: np.ndarray,
     target_compression_ratio: Union[float, None] = None,
-    target_residual_std: Union[float, None] = None
+    target_residual_stdev: Union[float, None] = None,
+    max_num_samples: int = 30000 * 3
 ):
     """
     Estimates the quantization scale factor for the QFC algorithm for a given
@@ -169,15 +180,19 @@ def qfc_estimate_quant_scale_factor(
     target_compression_ratio : float or None
         The target compression ratio
         Exactly one of target_compression_ratio and target_residual_std must be specified
-    target_residual_std : float or None
+    target_residual_stdev : float or None
         The target residual standard deviation
         Exactly one of target_compression_ratio and target_residual_std must be specified
+    max_num_samples : int
+        The maximum number of samples to use for the estimation
 
     Returns
     -------
     float
         The quantization scale factor
     """
+    if x.shape[0] > max_num_samples:
+        x = x[:max_num_samples]
     x_fft = np.fft.rfft(x, axis=0) / np.sqrt(x.shape[0])  # we divide by the sqrt of the number of samples so that quantization scale factor does not depend on the number of samples
     x_fft = np.ascontiguousarray(x_fft)  # This is important so that the codec will behave properly!
     x_fft_re = np.real(x_fft)
@@ -185,7 +200,7 @@ def qfc_estimate_quant_scale_factor(
     x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
 
     if target_compression_ratio is not None:
-        if target_residual_std is not None:
+        if target_residual_stdev is not None:
             raise ValueError(
                 "Only one of target_compression_ratio and target_residual_std can be specified"
             )
@@ -230,12 +245,13 @@ def qfc_estimate_quant_scale_factor(
             ascending=True
         )
         return qs
-    elif target_residual_std is not None:
+    elif target_residual_stdev is not None:
         if target_compression_ratio is not None:
             raise ValueError(
                 "Only one of target_compression_ratio and target_residual_std can be specified"
             )
-        target_sumsqr_in_fourier_domain = (target_residual_std**2 / 2) * x.shape[0]
+        target_sumsqr_in_fourier_domain = (target_residual_stdev**2 / 2) * x.shape[0]
+
         def resid_sumsqr_in_fourier_domain_for_quant_scale_factor(qs: float):
             x_re_quantized = np.round(x_fft_re * qs).astype(np.int16) / qs
             x_im_quantized = np.round(x_fft_im * qs).astype(np.int16) / qs

@@ -1,102 +1,53 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from qfc import qfc_compress, qfc_decompress, qfc_estimate_quant_scale_factor
+from qfc import qfc_estimate_quant_scale_factor
+from qfc.codecs import QFCCodec
 
 
-def main1():
-    for compression_method in ['zlib', 'zstd']:
-        assert compression_method == 'zlib' or compression_method == 'zstd'
-        num_samples = 5000
-        sampling_frequency = 30000
-        y = np.random.randn(num_samples, 10) * 50
-        y = lowpass_filter(y, sampling_frequency, 6000)
-        y = y.astype(np.int16)
-        target_compression_ratio = 15
-
-        ############################################################
-        quant_scale_factor = qfc_estimate_quant_scale_factor(
-            y,
-            target_compression_ratio=target_compression_ratio
-        )
-        print(f'Using quant scale factor: {quant_scale_factor}')
-        compressed_bytes = qfc_compress(
-            y,
-            quant_scale_factor=quant_scale_factor,
-            compression_method=compression_method
-        )
-        y_decompressed = qfc_decompress(
-            compressed_bytes,
-            dtype=str(y.dtype),
-            num_channels=y.shape[1],
-            quant_scale_factor=quant_scale_factor,
-            compression_method=compression_method
-        )
-        ############################################################
-
-        y_resid = y - y_decompressed
-        original_size = y.nbytes
-        compressed_size = len(compressed_bytes)
-        compression_ratio = original_size / compressed_size
-        print(f"Original size: {original_size} bytes")
-        print(f"Compressed size: {compressed_size} bytes")
-        print(f'Target compression ratio: {target_compression_ratio}')
-        print(f"Actual compression ratio: {compression_ratio}")
-        print(f'Std. dev. of residual: {np.std(y_resid):.2f}')
-
-        xgrid = np.arange(y.shape[0]) / sampling_frequency
-        ch = 3  # select a channel to plot
-        plt.figure()
-        plt.plot(xgrid, y[:, ch], label="Original")
-        plt.plot(xgrid, y_decompressed[:, ch], label="Decompressed")
-        plt.plot(xgrid, y_resid[:, ch], label="Residual")
-        plt.xlabel("Time")
-        plt.title(f'QFC compression ratio ({compression_method}): {compression_ratio:.2f}')
-        plt.legend()
-        plt.show()
-
-
-def main2():
-    num_samples = 5000
+def main():
     sampling_frequency = 30000
-    y = np.random.randn(num_samples, 10) * 50
+    duration = 2
+    num_channels = 10
+    num_samples = int(sampling_frequency * duration)
+    y = np.random.randn(num_samples, num_channels) * 50
     y = lowpass_filter(y, sampling_frequency, 6000)
+    y = np.ascontiguousarray(y)  # compressor requires C-order arrays
     y = y.astype(np.int16)
-    target_residual_std = 3
+    target_residual_stdev = 5
 
     ############################################################
     quant_scale_factor = qfc_estimate_quant_scale_factor(
         y,
-        target_residual_std=target_residual_std
+        target_residual_stdev=target_residual_stdev
     )
-    print(f'Using quant scale factor: {quant_scale_factor}')
-    compressed_bytes = qfc_compress(
-        y,
-        quant_scale_factor=quant_scale_factor
+    codec = QFCCodec(
+        quant_scale_factor=quant_scale_factor,
+        dtype="int16",
+        segment_length=0,
+        compression_method="zlib",
+        zlib_level=3
     )
-    y_decompressed = qfc_decompress(
-        compressed_bytes,
-        dtype=str(y.dtype),
-        num_channels=y.shape[1],
-        quant_scale_factor=quant_scale_factor
-    )
+    compressed_bytes = codec.encode(y)
+    y_reconstructed = codec.decode(compressed_bytes)
     ############################################################
 
-    y_resid = y - y_decompressed
+    y_resid = y - y_reconstructed
     original_size = y.nbytes
     compressed_size = len(compressed_bytes)
     compression_ratio = original_size / compressed_size
     print(f"Original size: {original_size} bytes")
     print(f"Compressed size: {compressed_size} bytes")
     print(f"Actual compression ratio: {compression_ratio}")
-    print(f'Target residual std: {target_residual_std}')
-    print(f'Std. dev. of residual: {np.std(y_resid):.2f}')
+    print(f'Target residual std. dev.: {target_residual_stdev:.2f}')
+    print(f'Actual Std. dev. of residual: {np.std(y_resid):.2f}')
 
     xgrid = np.arange(y.shape[0]) / sampling_frequency
     ch = 3  # select a channel to plot
+    n = 1000  # number of samples to plot
     plt.figure()
-    plt.plot(xgrid, y[:, ch], label="Original")
-    plt.plot(xgrid, y_decompressed[:, ch], label="Decompressed")
-    plt.plot(xgrid, y_resid[:, ch], label="Residual")
+    plt.plot(xgrid[:n], y[:n, ch], label="Original")
+    plt.plot(xgrid[:n], y_reconstructed[:n, ch], label="Decompressed")
+    plt.plot(xgrid[:n], y_resid[:n, ch], label="Residual")
     plt.xlabel("Time")
     plt.title(f'QFC compression ratio: {compression_ratio:.2f}')
     plt.legend()
@@ -106,7 +57,7 @@ def main2():
 def lowpass_filter(input_array, sampling_frequency, cutoff_frequency):
     F = np.fft.fft(input_array, axis=0)
     N = input_array.shape[0]
-    freqs = np.fft.fftfreq(N, d=1/sampling_frequency)
+    freqs = np.fft.fftfreq(N, d=1 / sampling_frequency)
     sigma = cutoff_frequency / 3
     window = np.exp(-np.square(freqs) / (2 * sigma**2))
     F_filtered = F * window[:, None]
@@ -115,5 +66,4 @@ def lowpass_filter(input_array, sampling_frequency, cutoff_frequency):
 
 
 if __name__ == "__main__":
-    main1()
-    main2()
+    main()

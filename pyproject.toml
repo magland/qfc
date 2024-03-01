@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "qfc"
-version = "0.2.2"
+version = "0.3.0"
 description = ""
 authors = ["Jeremy Magland <jmagland@flatironinstitute.org>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"
+numcodecs = "^0.12.1"
 
 
 [build-system]
