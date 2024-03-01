@@ -23,7 +23,7 @@ def main():
     codec = QFCCodec(
         quant_scale_factor=quant_scale_factor,
         dtype="int16",
-        segment_length=0,
+        segment_length=10000,
         compression_method="zlib",
         zlib_level=3
     )
