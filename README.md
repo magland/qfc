@@ -104,6 +104,16 @@ if __name__ == "__main__":
 
 See [examples/zarr_example.py](./examples/zarr_example.py)
 
+## Benchmarks
+
+I have put together some preliminary systematic benchmarks on real and synthetic data. See [./benchmarks](./benchmarks).
+
+As can be seen:
+- Quantizing in the Fourier domain (QFC) is a lot better than quantizing in the time domain (call it QTC) for real data or for bandpass-filtered data.
+- The compression ratio is a lot better for bandpass-filtered data compared with unfiltered raw.
+- For the lossless part of the method, zstd is better than zlib, both in terms of all three of these factors: compression ratio, compression speed, and decompression speed.
+- Obviously, the compression ratio is going to depend heavily on the target residual std. dev.
+
 ## License
 
 This code is provided under the Apache License, Version 2.0.
