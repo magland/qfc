@@ -100,6 +100,10 @@ if __name__ == "__main__":
     main()
 ```
 
+## Zarr example
+
+See [examples/zarr_example.py](./examples/zarr_example.py)
+
 ## License
 
 This code is provided under the Apache License, Version 2.0.
