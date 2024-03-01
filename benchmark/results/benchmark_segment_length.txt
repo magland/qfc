@@ -1,0 +1,57 @@
+RESULTS:
+qfc_real_bandpass_seg0.02
+  Compression ratio: 10.49889816251055
+  Elapsed compression time: 0.23733091354370117
+  Elapsed decompression time: 0.23843932151794434
+  Residual stdev: 0.8612309171284923
+
+qfc_real_bandpass_seg0.1
+  Compression ratio: 10.863719961213125
+  Elapsed compression time: 0.26006007194519043
+  Elapsed decompression time: 0.2673068046569824
+  Residual stdev: 0.8554970031728494
+
+qfc_real_bandpass_seg1
+  Compression ratio: 11.06059274983906
+  Elapsed compression time: 0.3717021942138672
+  Elapsed decompression time: 0.45328664779663086
+  Residual stdev: 0.8526488919918479
+
+qfc_real_bandpass_seg2
+  Compression ratio: 11.05945923372444
+  Elapsed compression time: 0.5149474143981934
+  Elapsed decompression time: 0.6467432975769043
+  Residual stdev: 0.852672687109268
+
+qfc_real_nofilt_seg0.02
+  Compression ratio: 4.989053423472652
+  Elapsed compression time: 0.3011503219604492
+  Elapsed decompression time: 0.23691582679748535
+  Residual stdev: 1.2024425913520516
+
+qfc_real_nofilt_seg0.1
+  Compression ratio: 5.086268994311723
+  Elapsed compression time: 0.31337666511535645
+  Elapsed decompression time: 0.31028270721435547
+  Residual stdev: 1.2030700487089947
+
+qfc_real_nofilt_seg1
+  Compression ratio: 5.1392384536379465
+  Elapsed compression time: 0.5133621692657471
+  Elapsed decompression time: 0.4835035800933838
+  Residual stdev: 1.2031979904356223
+
+qfc_real_nofilt_seg2
+  Compression ratio: 5.142930039298548
+  Elapsed compression time: 0.583622932434082
+  Elapsed decompression time: 0.6955068111419678
+  Residual stdev: 1.2032153790516829
+
+qfc_real_bandpass_seg0.02 | cr: 10.49889816251055 | comp: 0.23733091354370117 | decomp: 0.23843932151794434 | stdev: 0.8612309171284923
+qfc_real_bandpass_seg0.1 | cr: 10.863719961213125 | comp: 0.26006007194519043 | decomp: 0.2673068046569824 | stdev: 0.8554970031728494
+qfc_real_bandpass_seg1 | cr: 11.06059274983906 | comp: 0.3717021942138672 | decomp: 0.45328664779663086 | stdev: 0.8526488919918479
+qfc_real_bandpass_seg2 | cr: 11.05945923372444 | comp: 0.5149474143981934 | decomp: 0.6467432975769043 | stdev: 0.852672687109268
+qfc_real_nofilt_seg0.02 | cr: 4.989053423472652 | comp: 0.3011503219604492 | decomp: 0.23691582679748535 | stdev: 1.2024425913520516
+qfc_real_nofilt_seg0.1 | cr: 5.086268994311723 | comp: 0.31337666511535645 | decomp: 0.31028270721435547 | stdev: 1.2030700487089947
+qfc_real_nofilt_seg1 | cr: 5.1392384536379465 | comp: 0.5133621692657471 | decomp: 0.4835035800933838 | stdev: 1.2031979904356223
+qfc_real_nofilt_seg2 | cr: 5.142930039298548 | comp: 0.583622932434082 | decomp: 0.6955068111419678 | stdev: 1.2032153790516829

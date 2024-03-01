@@ -1,0 +1,119 @@
+qfc_real_nofilt_zlib7
+  Compression ratio: 5.593154794200307
+  Elapsed compression time: 5.274965763092041
+  Elapsed decompression time: 0.3215172290802002
+  Residual stdev: 1.2030700487089947
+
+RESULTS:
+qfc_real_bandpass_zstd1
+  Compression ratio: 10.574477781893135
+  Elapsed compression time: 0.259075403213501
+  Elapsed decompression time: 0.2674391269683838
+  Residual stdev: 0.8554970031728494
+
+qfc_real_bandpass_zstd3
+  Compression ratio: 10.863719961213125
+  Elapsed compression time: 0.2726469039916992
+  Elapsed decompression time: 0.2698841094970703
+  Residual stdev: 0.8554970031728494
+
+qfc_real_bandpass_zstd6
+  Compression ratio: 11.121462395072575
+  Elapsed compression time: 0.42461371421813965
+  Elapsed decompression time: 0.24250030517578125
+  Residual stdev: 0.8554970031728494
+
+qfc_real_bandpass_zstd9
+  Compression ratio: 11.338688698368735
+  Elapsed compression time: 0.5788576602935791
+  Elapsed decompression time: 0.26456189155578613
+  Residual stdev: 0.8554970031728494
+
+qfc_real_bandpass_zlib1
+  Compression ratio: 9.105083691487042
+  Elapsed compression time: 0.4182093143463135
+  Elapsed decompression time: 0.30933570861816406
+  Residual stdev: 0.8554970031728494
+
+qfc_real_bandpass_zlib3
+  Compression ratio: 10.018351759375193
+  Elapsed compression time: 0.7615277767181396
+  Elapsed decompression time: 0.367279052734375
+  Residual stdev: 0.8554970031728494
+
+qfc_real_bandpass_zlib5
+  Compression ratio: 10.786254267218213
+  Elapsed compression time: 0.674330472946167
+  Elapsed decompression time: 0.29021215438842773
+  Residual stdev: 0.8554970031728494
+
+qfc_real_bandpass_zlib7
+  Compression ratio: 11.509210115516703
+  Elapsed compression time: 2.010011672973633
+  Elapsed decompression time: 0.2691059112548828
+  Residual stdev: 0.8554970031728494
+
+qfc_real_nofilt_zstd1
+  Compression ratio: 4.930164561360862
+  Elapsed compression time: 0.2955455780029297
+  Elapsed decompression time: 0.2761878967285156
+  Residual stdev: 1.2030700487089947
+
+qfc_real_nofilt_zstd3
+  Compression ratio: 5.086268994311723
+  Elapsed compression time: 0.27389955520629883
+  Elapsed decompression time: 0.2693510055541992
+  Residual stdev: 1.2030700487089947
+
+qfc_real_nofilt_zstd6
+  Compression ratio: 5.229845347298958
+  Elapsed compression time: 0.6610414981842041
+  Elapsed decompression time: 0.27802157402038574
+  Residual stdev: 1.2030700487089947
+
+qfc_real_nofilt_zstd9
+  Compression ratio: 5.334978284971199
+  Elapsed compression time: 1.2174792289733887
+  Elapsed decompression time: 0.2820851802825928
+  Residual stdev: 1.2030700487089947
+
+qfc_real_nofilt_zlib1
+  Compression ratio: 4.4276592258995
+  Elapsed compression time: 0.5443851947784424
+  Elapsed decompression time: 0.3565330505371094
+  Residual stdev: 1.2030700487089947
+
+qfc_real_nofilt_zlib3
+  Compression ratio: 4.893768686167542
+  Elapsed compression time: 1.115776538848877
+  Elapsed decompression time: 0.32683658599853516
+  Residual stdev: 1.2030700487089947
+
+qfc_real_nofilt_zlib5
+  Compression ratio: 5.217159154942494
+  Elapsed compression time: 1.475388765335083
+  Elapsed decompression time: 0.3395352363586426
+  Residual stdev: 1.2030700487089947
+
+qfc_real_nofilt_zlib7
+  Compression ratio: 5.593154794200307
+  Elapsed compression time: 5.274965763092041
+  Elapsed decompression time: 0.3215172290802002
+  Residual stdev: 1.2030700487089947
+
+qfc_real_bandpass_zstd1 | cr: 10.574477781893135 | comp: 0.259075403213501 | decomp: 0.2674391269683838 | stdev: 0.8554970031728494
+qfc_real_bandpass_zstd3 | cr: 10.863719961213125 | comp: 0.2726469039916992 | decomp: 0.2698841094970703 | stdev: 0.8554970031728494
+qfc_real_bandpass_zstd6 | cr: 11.121462395072575 | comp: 0.42461371421813965 | decomp: 0.24250030517578125 | stdev: 0.8554970031728494
+qfc_real_bandpass_zstd9 | cr: 11.338688698368735 | comp: 0.5788576602935791 | decomp: 0.26456189155578613 | stdev: 0.8554970031728494
+qfc_real_bandpass_zlib1 | cr: 9.105083691487042 | comp: 0.4182093143463135 | decomp: 0.30933570861816406 | stdev: 0.8554970031728494
+qfc_real_bandpass_zlib3 | cr: 10.018351759375193 | comp: 0.7615277767181396 | decomp: 0.367279052734375 | stdev: 0.8554970031728494
+qfc_real_bandpass_zlib5 | cr: 10.786254267218213 | comp: 0.674330472946167 | decomp: 0.29021215438842773 | stdev: 0.8554970031728494
+qfc_real_bandpass_zlib7 | cr: 11.509210115516703 | comp: 2.010011672973633 | decomp: 0.2691059112548828 | stdev: 0.8554970031728494
+qfc_real_nofilt_zstd1 | cr: 4.930164561360862 | comp: 0.2955455780029297 | decomp: 0.2761878967285156 | stdev: 1.2030700487089947
+qfc_real_nofilt_zstd3 | cr: 5.086268994311723 | comp: 0.27389955520629883 | decomp: 0.2693510055541992 | stdev: 1.2030700487089947
+qfc_real_nofilt_zstd6 | cr: 5.229845347298958 | comp: 0.6610414981842041 | decomp: 0.27802157402038574 | stdev: 1.2030700487089947
+qfc_real_nofilt_zstd9 | cr: 5.334978284971199 | comp: 1.2174792289733887 | decomp: 0.2820851802825928 | stdev: 1.2030700487089947
+qfc_real_nofilt_zlib1 | cr: 4.4276592258995 | comp: 0.5443851947784424 | decomp: 0.3565330505371094 | stdev: 1.2030700487089947
+qfc_real_nofilt_zlib3 | cr: 4.893768686167542 | comp: 1.115776538848877 | decomp: 0.32683658599853516 | stdev: 1.2030700487089947
+qfc_real_nofilt_zlib5 | cr: 5.217159154942494 | comp: 1.475388765335083 | decomp: 0.3395352363586426 | stdev: 1.2030700487089947
+qfc_real_nofilt_zlib7 | cr: 5.593154794200307 | comp: 5.274965763092041 | decomp: 0.3215172290802002 | stdev: 1.2030700487089947

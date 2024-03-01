@@ -2,7 +2,7 @@ from typing import Literal
 import concurrent.futures
 import zlib
 import numpy as np
-from .qfc_compress import qfc_pre_compress, qfc_inv_pre_compress
+from .qfc_compress import qfc_pre_compress, qfc_inv_pre_compress, int_dtype
 
 
 def qfc_multi_segment_pre_compress(
@@ -177,12 +177,12 @@ def qfc_multi_segment_decompress(
     """
     if compression_method == "zlib":
         decompressed_array = np.frombuffer(
-            zlib.decompress(compressed_bytes), dtype=np.int16
+            zlib.decompress(compressed_bytes), dtype=int_dtype
         )
     elif compression_method == "zstd":
         import zstandard as zstd
         dctx = zstd.ZstdDecompressor()
-        decompressed_array = np.frombuffer(dctx.decompress(compressed_bytes), dtype=np.int16)
+        decompressed_array = np.frombuffer(dctx.decompress(compressed_bytes), dtype=int_dtype)
     else:
         raise ValueError("compression_method must be 'zlib' or 'zstd'")
     decompressed_array = decompressed_array.reshape(-1, num_channels)

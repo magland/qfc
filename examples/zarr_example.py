@@ -106,7 +106,8 @@ def measure_total_size(tmpdir):
 
 def estimate_noise_level(array):
     # use median absolute deviation as a robust estimator of noise level
-    return 1.4826 * np.median(np.abs(array - np.median(array)))
+    x = array.astype("float32")
+    return 1.4826 * np.median(np.abs(x - np.median(x)))
 
 
 if __name__ == "__main__":

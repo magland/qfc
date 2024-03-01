@@ -1,0 +1,48 @@
+RESULTS:
+qfc_real_bandpass
+  Compression ratio: 10.863719961213125
+  Elapsed compression time: 0.26361656188964844
+  Elapsed decompression time: 0.28986501693725586
+  Residual stdev: 0.8554970031728494
+
+qtc_real_bandpass
+  Compression ratio: 5.084373792833615
+  Elapsed compression time: 0.32027196884155273
+  Elapsed decompression time: 0.17186808586120605
+  Residual stdev: 0.7627174085016359
+
+qfc_real_nofilt
+  Compression ratio: 5.086268994311723
+  Elapsed compression time: 0.35959839820861816
+  Elapsed decompression time: 0.31951260566711426
+  Residual stdev: 1.2030700487089947
+
+qtc_real_nofilt
+  Compression ratio: 3.391128225711375
+  Elapsed compression time: 0.3581392765045166
+  Elapsed decompression time: 0.14589452743530273
+  Residual stdev: 1.1795338750439148
+
+qfc_gaussian_bandpass
+  Compression ratio: 10.793834022314753
+  Elapsed compression time: 0.25041675567626953
+  Elapsed decompression time: 0.24970173835754395
+  Residual stdev: 3.4847050975371228
+
+qtc_gaussian_bandpass
+  Compression ratio: 5.030374927772964
+  Elapsed compression time: 0.2319939136505127
+  Elapsed decompression time: 0.1037139892578125
+  Residual stdev: 3.4426952308077166
+
+qfc_gaussian_nofilt
+  Compression ratio: 4.99195415722099
+  Elapsed compression time: 0.2810988426208496
+  Elapsed decompression time: 0.2576320171356201
+  Residual stdev: 5.676015893589845
+
+qtc_gaussian_nofilt
+  Compression ratio: 4.9613492802813495
+  Elapsed compression time: 0.21575331687927246
+  Elapsed decompression time: 0.09142565727233887
+  Residual stdev: 5.517541861593542
