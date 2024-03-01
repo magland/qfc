@@ -106,7 +106,7 @@ See [examples/zarr_example.py](./examples/zarr_example.py)
 
 ## Benchmarks
 
-I have put together some preliminary systematic benchmarks on real and synthetic data. See [./benchmarks](./benchmarks).
+I have put together some preliminary systematic benchmarks on real and synthetic data. See [./benchmarks](./benchmarks) and [./benchmarks/results](./benchmarks/results).
 
 As can be seen:
 - Quantizing in the Fourier domain (QFC) is a lot better than quantizing in the time domain (call it QTC) for real data or for bandpass-filtered data.
