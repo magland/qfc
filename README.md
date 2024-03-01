@@ -24,7 +24,7 @@ For a comparison of various lossy and lossless compression schemes, see [Compres
 pip install qfc
 ```
 
-## Usage
+## Example usage
 
 ```python
 # See examples/example1.py
@@ -99,6 +99,10 @@ def lowpass_filter(input_array, sampling_frequency, cutoff_frequency):
 if __name__ == "__main__":
     main()
 ```
+
+## Zarr example
+
+See [examples/zarr_example.py](./examples/zarr_example.py)
 
 ## License
 
