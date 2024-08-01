@@ -22,7 +22,7 @@ def qfc_multi_segment_pre_compress(
         obtained from qfc_estimate_quant_scale_factor
     segment_length : int
         The length of each segment
-    
+
     Returns
     -------
     np.ndarray

@@ -1,6 +1,5 @@
-from typing import Callable, Union, Literal
+from typing import Callable, Union
 import numpy as np
-import zlib
 
 int_dtype = np.int16
 
@@ -38,53 +37,6 @@ def qfc_pre_compress(x: np.ndarray, *, quant_scale_factor: float):
     return x_fft_concat_quantized
 
 
-def qfc_compress(
-    x: np.ndarray,
-    *,
-    quant_scale_factor: float,
-    compression_method: Literal["zlib", "zstd"] = "zlib",
-    zstd_level: int = 3,
-    zlib_level: int = 3
-):
-    """
-    Compresses an array using the QFC algorithm. This is an internal function,
-    called by the codec, and should not be called directly, because the output
-    will not include the header.
-
-    Parameters
-    ----------
-    x : np.ndarray
-        The input array to be compressed
-    quant_scale_factor : float
-        The scale factor to use during quantization, obtained from
-        qfc_estimate_quant_scale_factor
-    compression_method : str
-        The compression method to use, either "zlib" or "zstd"
-    zstd_level : int
-        The compression level to use if compression_method is "zstd"
-    zlib_level : int
-        The compression level to use if compression_method is "zlib"
-
-    Returns
-    -------
-    bytes
-        The compressed array as bytes. Will not contain the header.
-    """
-    x_fft_concat_quantized = qfc_pre_compress(x, quant_scale_factor=quant_scale_factor)
-    if compression_method == "zlib":
-        compressed_bytes = zlib.compress(
-            x_fft_concat_quantized.tobytes(), level=zlib_level
-        )
-    elif compression_method == "zstd":
-        import zstandard as zstd
-
-        cctx = zstd.ZstdCompressor(level=zstd_level)
-        compressed_bytes = cctx.compress(x_fft_concat_quantized.tobytes())
-    else:
-        raise ValueError("compression_method must be 'zlib' or 'zstd'")
-    return compressed_bytes
-
-
 def qfc_inv_pre_compress(x: np.ndarray, *, quant_scale_factor: float, dtype: str):
     """
     Inverts the preparation of an array for compression using the QFC algorithm.
@@ -115,58 +67,6 @@ def qfc_inv_pre_compress(x: np.ndarray, *, quant_scale_factor: float, dtype: str
         x
     )  # This is important so that the codec will behave properly!
     return x.astype(dtype)
-
-
-def qfc_decompress(
-    compressed_bytes: bytes,
-    *,
-    quant_scale_factor: float,
-    num_channels: int,
-    dtype: str,
-    compression_method: Literal["zlib", "zstd"] = "zlib"
-):
-    """
-    Decompresses an array using the QFC algorithm.
-    This is an internal function, called by the codec, and should not be called
-    directly, because the input is expected to be the compressed array only, not
-    including the header.
-
-    Parameters
-    ----------
-    compressed_bytes : bytes
-        The compressed array, not including the header
-    quant_scale_factor : float
-        The quantization scale factor used during compression
-    num_channels : int
-        The number of channels
-    dtype : str
-        Data type string for the reconstructed array
-    compression_method : str
-        The compression method used, either "zlib" or "zstd"
-
-    Returns
-    -------
-    np.ndarray
-        The decompressed array
-    """
-    if compression_method == "zlib":
-        decompressed_array = np.frombuffer(
-            zlib.decompress(compressed_bytes), dtype=int_dtype
-        )
-    elif compression_method == "zstd":
-        import zstandard as zstd
-
-        dctx = zstd.ZstdDecompressor()
-        decompressed_array = np.frombuffer(
-            dctx.decompress(compressed_bytes), dtype=int_dtype
-        )
-    else:
-        raise ValueError("compression_method must be 'zlib' or 'zstd'")
-    decompressed_array = decompressed_array.reshape(-1, num_channels)
-    x = qfc_inv_pre_compress(
-        decompressed_array, quant_scale_factor=quant_scale_factor, dtype=dtype
-    )
-    return x
 
 
 def qfc_estimate_quant_scale_factor(
