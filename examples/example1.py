@@ -8,7 +8,7 @@ def main():
     sampling_frequency = 30000
     duration = 2
     num_channels = 10
-    num_samples = int(sampling_frequency * duration)
+    num_samples = int(sampling_frequency * duration) + 1
     y = np.random.randn(num_samples, num_channels) * 50
     y = lowpass_filter(y, sampling_frequency, 6000)
     y = np.ascontiguousarray(y)  # compressor requires C-order arrays

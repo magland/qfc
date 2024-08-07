@@ -22,6 +22,8 @@ def qfc_pre_compress(x: np.ndarray, *, quant_scale_factor: float):
     np.ndarray
         The prepared array.
     """
+    N = x.shape[0]
+    N_is_even = N % 2 == 0
     qs = quant_scale_factor
     x_fft = np.fft.rfft(x, axis=0) / np.sqrt(
         x.shape[0]
@@ -31,9 +33,13 @@ def qfc_pre_compress(x: np.ndarray, *, quant_scale_factor: float):
     )  # This is important so the codec will behave properly
     x_fft_re = np.real(x_fft)
     x_fft_im = np.imag(x_fft)
-    x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
+    if N_is_even:
+        x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
+    else:
+        x_fft_im = x_fft_im[1:]  # the first value is always zero
     x_fft_concat = np.concatenate([x_fft_re, x_fft_im], axis=0)
     x_fft_concat_quantized = np.round(x_fft_concat * qs).astype(int_dtype)
+    assert x_fft_concat_quantized.shape[0] == N
     return x_fft_concat_quantized
 
 
@@ -58,14 +64,20 @@ def qfc_inv_pre_compress(x: np.ndarray, *, quant_scale_factor: float, dtype: str
     num_channels = x.shape[1] if len(x.shape) > 1 else 1
     x_fft_re = x[: (num_samples // 2 + 1), :] / qs
     x_fft_im = x[(num_samples // 2 + 1):, :] / qs
-    x_fft_im = np.concatenate(
-        [np.zeros((1, num_channels)), x_fft_im, np.zeros((1, num_channels))], axis=0
-    )
+    if num_samples % 2 == 0:
+        x_fft_im = np.concatenate(
+            [np.zeros((1, num_channels)), x_fft_im, np.zeros((1, num_channels))], axis=0
+        )
+    else:
+        x_fft_im = np.concatenate([np.zeros((1, num_channels)), x_fft_im], axis=0)
     x_fft = x_fft_re + 1j * x_fft_im
-    x = np.fft.irfft(x_fft, axis=0) * np.sqrt(num_samples)
+    # it's important to specify num_samples here in the case where it is odd
+    # see https://stackoverflow.com/questions/52594392/numpy-fft-irfft-why-is-lena-necessary
+    x = np.fft.irfft(x_fft, num_samples, axis=0) * np.sqrt(num_samples)
     x = np.ascontiguousarray(
         x
     )  # This is important so that the codec will behave properly!
+    assert x.shape[0] == num_samples, f"{x.shape[0]} != {num_samples}"
     return x.astype(dtype)
 
 
