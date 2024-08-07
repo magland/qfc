@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from typing import Callable, Union, Literal
 import numpy as np
 
 int_dtype = np.int16
@@ -86,6 +86,9 @@ def qfc_estimate_quant_scale_factor(
     target_compression_ratio: Union[float, None] = None,
     target_residual_stdev: Union[float, None] = None,
     max_num_samples: int = 30000 * 3,
+    compression_method: Literal["zstd", "zlib"] = "zlib",
+    zstd_level: int = 3,
+    zlib_level: int = 3,
 ):
     """
     Estimates the quantization scale factor for the QFC algorithm for a given
@@ -103,99 +106,69 @@ def qfc_estimate_quant_scale_factor(
         Exactly one of target_compression_ratio and target_residual_std must be specified
     max_num_samples : int
         The maximum number of samples to use for the estimation
+    compression_method : str
+        The compression method to use for the codec
+    zstd_level : int
+        The zstd compression level to use
+    zlib_level : int
+        The zlib compression level to use
 
     Returns
     -------
     float
         The quantization scale factor
     """
+    from ..codecs.QFCCodec import QFCCodec
+
     if x.shape[0] > max_num_samples:
         x = x[:max_num_samples]
-    x_fft = np.fft.rfft(x, axis=0) / np.sqrt(
-        x.shape[0]
-    )  # we divide by the sqrt of the number of samples so that quantization scale factor does not depend on the number of samples
-    x_fft = np.ascontiguousarray(
-        x_fft
-    )  # This is important so that the codec will behave properly!
-    x_fft_re = np.real(x_fft)
-    x_fft_im = np.imag(x_fft)
-    x_fft_im = x_fft_im[1:-1]  # the first and last values are always zero
 
-    if target_compression_ratio is not None:
-        if target_residual_stdev is not None:
-            raise ValueError(
-                "Only one of target_compression_ratio and target_residual_std can be specified"
-            )
-        values = np.concatenate([x_fft_re, x_fft_im], axis=0).ravel()
-
-        # sample at most 5000 values to estimate the quantization scale factor
-        # do it deterministically to avoid randomness in the results
-        if values.size > 5000:
-            indices = np.linspace(0, values.size - 1, 5000).astype(np.int32)
-            values = values[indices]
-
-        def _estimate_entropy(values: np.ndarray):
-            """
-            Computes the entropy of an array
-
-            Parameters
-            ----------
-            values : np.ndarray
-                The values to compute the entropy of
-
-            Returns
-            -------
-            float
-                The entropy of the array
-            """
-            unique_values, counts = np.unique(values, return_counts=True)
-            probabilities = counts / values.size
-            entropy = -np.sum(probabilities * np.log2(probabilities)).astype(np.float32)
-            return float(entropy)
-
-        def entropy_for_quant_scale_factor(qs: float):
-            return _estimate_entropy(np.round(values * qs).astype(int_dtype))
-
-        num_bits_per_value_in_original_array = np.dtype(x.dtype).itemsize * 8
-        target_entropy = (
-            float(num_bits_per_value_in_original_array) / target_compression_ratio
+    def get_resid_stdev_for_quant_scale_factor(qs: float):
+        codec = QFCCodec(
+            quant_scale_factor=qs,
+            dtype=x.dtype,
+            segment_length=x.shape[0],
+            compression_method=compression_method,
+            zstd_level=zstd_level,
+            zlib_level=zlib_level
         )
+        compressed = codec.encode(x)
+        y_reconstructed = codec.decode(compressed)
+        y_resid = x - y_reconstructed
+        return float(np.std(y_resid))
 
+    def get_compression_ratio_for_quant_scale_factor(qs: float):
+        codec = QFCCodec(
+            quant_scale_factor=qs,
+            dtype=x.dtype,
+            segment_length=x.shape[0],
+            compression_method=compression_method,
+            zstd_level=zstd_level,
+            zlib_level=zlib_level
+        )
+        compressed = codec.encode(x)
+        return (x.size * 2) / len(compressed)
+
+    if target_residual_stdev is not None:
         qs = _monotonic_binary_search(
-            entropy_for_quant_scale_factor,
-            target_value=target_entropy,
+            get_resid_stdev_for_quant_scale_factor,
+            target_value=target_residual_stdev,
             max_iterations=100,
             tolerance=0.001,
-            ascending=True,
+            ascending=False
         )
-        return qs
-    elif target_residual_stdev is not None:
-        if target_compression_ratio is not None:
-            raise ValueError(
-                "Only one of target_compression_ratio and target_residual_std can be specified"
-            )
-        target_sumsqr_in_fourier_domain = (target_residual_stdev**2 / 2) * x.shape[0]
-
-        def resid_sumsqr_in_fourier_domain_for_quant_scale_factor(qs: float):
-            x_re_quantized = np.round(x_fft_re * qs).astype(int_dtype) / qs
-            x_im_quantized = np.round(x_fft_im * qs).astype(int_dtype) / qs
-            diffs = np.concatenate(
-                [x_re_quantized - x_fft_re, x_im_quantized - x_fft_im], axis=0
-            )
-            return np.sum(np.square(diffs)) / x.shape[1]
-
+    elif target_compression_ratio is not None:
         qs = _monotonic_binary_search(
-            resid_sumsqr_in_fourier_domain_for_quant_scale_factor,
-            target_value=target_sumsqr_in_fourier_domain,
+            get_compression_ratio_for_quant_scale_factor,
+            target_value=target_compression_ratio,
             max_iterations=100,
             tolerance=0.001,
-            ascending=False,
+            ascending=False
         )
-        return qs
     else:
-        raise ValueError(
-            "You must either specify target_compression_ratio or target_residual_std"
-        )
+        raise ValueError("Exactly one of target_compression_ratio and target_residual_std must be specified")
+
+    return qs
 
 
 def _monotonic_binary_search(
